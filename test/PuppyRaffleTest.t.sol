@@ -213,4 +213,20 @@ contract PuppyRaffleTest is Test {
         puppyRaffle.withdrawFees();
         assertEq(address(feeAddress).balance, expectedPrizeAmount);
     }
+
+    function test_denialOfService() public {
+        uint256 playersNum = 100;
+        address[] memory players = new address[](playersNum);
+
+        for (uint256 i = 0; i < playersNum; i++) {
+            players[i] = address(i);
+        }
+
+        uint256 gasStart = gasleft();
+        puppyRaffle.enterRaffle{value: entranceFee}(players);
+        uint256 gasEnd = gasleft();
+        uint256 gasUsed = gasStart - gasEnd;
+        console.log("Gas used for entering raffle with %s players: %s", playersNum, gasUsed);
+        assertEq(puppyRaffle.players(0), address(0)); // Ensure no players were added
+    }
 }
