@@ -215,6 +215,7 @@ contract PuppyRaffleTest is Test {
     }
 
     function test_denialOfService() public {
+        vm.txGasPrice(1);
         uint256 playersNum = 100;
         address[] memory players = new address[](playersNum);
 
@@ -223,10 +224,24 @@ contract PuppyRaffleTest is Test {
         }
 
         uint256 gasStart = gasleft();
-        puppyRaffle.enterRaffle{value: entranceFee}(players);
+        puppyRaffle.enterRaffle{value: entranceFee * players.length}(players);
         uint256 gasEnd = gasleft();
-        uint256 gasUsed = gasStart - gasEnd;
-        console.log("Gas used for entering raffle with %s players: %s", playersNum, gasUsed);
-        assertEq(puppyRaffle.players(0), address(0)); // Ensure no players were added
+        uint256 gasUsedFirst = (gasStart - gasEnd) * tx.gasprice;
+        // Ensure no players were added
+        console.log("Gas cost for first entry: %s", gasUsedFirst); 
+
+
+        address[] memory playersTwo = new address[](playersNum);
+        for (uint256 i = 0; i < playersNum; i++) {
+            playersTwo[i] = address(i + playersNum);
+        }
+        uint256 gasStartSecond = gasleft();
+        puppyRaffle.enterRaffle{value: entranceFee * playersTwo.length}(playersTwo);
+        uint256 gasEndSecond = gasleft();
+        uint256 gasUsedSecond = (gasStartSecond - gasEndSecond) * tx.gasprice;
+        // Ensure no players were added
+        console.log("Gas cost for second entry: %s", gasUsedSecond);
+
+        assert(gasUsedSecond > gasUsedFirst);
     }
 }
